@@ -1,8 +1,25 @@
+# Dependencies — restored with `npm install`
 node_modules/
-dist/
+
+# Build output
 build/
+dist/
+
+# External binaries — downloaded separately (see README)
 bin/yt-dlp*
 bin/ffmpeg*
 bin/ffprobe*
+
+# Editor and local tooling state
+.vscode/
 .idea/
+.claude/
+
+# Design references and archives
+new_design/
+*.zip
+
+# Logs and OS junk
 *.log
+Thumbs.db
+.DS_Store

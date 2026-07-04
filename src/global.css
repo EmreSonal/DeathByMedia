@@ -58,12 +58,22 @@ html, body, #app {
   height: 100%;
   overflow: hidden;
   font-family: var(--font);
-  background: var(--mica, #222226);
   color: var(--text, #ffffff);
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Painted on body only — with the translucent tints below, stacking the
+   backdrop on html/body/#app would multiply the alpha. */
+body { background: var(--mica, #222226); }
+
+/* Real translucency: when Electron draws the window with the acrylic
+   material (html[data-glass]), replace the solid backdrop with a tint so
+   the blurred desktop behind the window shows through. Solid --mica stays
+   as the fallback for browsers and older Windows. */
+[data-glass][data-theme="dark"] { --mica: rgba(32, 32, 38, 0.52); }
+[data-glass][data-theme="light"] { --mica: rgba(239, 241, 246, 0.55); }
 
 /* ─── Scrollbar ───────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; }

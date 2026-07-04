@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn, execFile } = require('child_process');
@@ -52,15 +52,27 @@ function getYtdlpPath() {
 // ─── Window ──────────────────────────────────────────────────────────
 let mainWindow;
 
+// Acrylic (backgroundMaterial) needs Windows 11 22H2+ (build 22621).
+// It also requires titleBarStyle:'hidden' — with frame:false the material
+// is not rendered by the compositor.
+function supportsAcrylic() {
+  if (process.platform !== 'win32') return false;
+  const build = parseInt(require('os').release().split('.')[2], 10);
+  return Number.isFinite(build) && build >= 22621;
+}
+
 function createWindow() {
+  const acrylic = supportsAcrylic();
+
   mainWindow = new BrowserWindow({
     width: 1100,
     height: 750,
     minWidth: 900,
     minHeight: 650,
-    frame: false,
-    backgroundColor: '#222226',
-    backgroundMaterial: 'mica',
+    titleBarStyle: 'hidden',
+    ...(acrylic
+      ? { backgroundMaterial: 'acrylic' }
+      : { backgroundColor: '#222226' }),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -86,6 +98,11 @@ ipcMain.on('window:maximize', () => {
   else mainWindow?.maximize();
 });
 ipcMain.on('window:close', () => mainWindow?.close());
+
+// Keep the OS-rendered acrylic base tint in sync with the app theme
+ipcMain.on('theme:set', (_, theme) => {
+  nativeTheme.themeSource = theme === 'light' ? 'light' : 'dark';
+});
 
 // ─── Dialogs ─────────────────────────────────────────────────────────
 ipcMain.handle('dialog:openFiles', async (_, options) => {

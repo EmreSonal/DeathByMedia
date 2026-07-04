@@ -1,6 +1,13 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
+// True when the window is drawn with the acrylic background material
+// (Windows 11 22H2+), so the renderer can go translucent.
+const glass = process.platform === 'win32' &&
+  parseInt(process.getSystemVersion().split('.')[2], 10) >= 22621;
+
 contextBridge.exposeInMainWorld('api', {
+  glass,
+  setTheme: (theme) => ipcRenderer.send('theme:set', theme),
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),

@@ -10,6 +10,7 @@ const savedTheme = (() => {
 export const theme = writable(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark');
 theme.subscribe(t => {
   try { localStorage.setItem('dbm-lg-theme', t); } catch {}
+  window.api?.setTheme?.(t);
 });
 
 export function toggleTheme() {

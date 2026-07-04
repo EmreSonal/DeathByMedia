@@ -6,9 +6,7 @@
 
 <header class="titlebar">
   <div class="brand">
-    <div class="icon-tile">
-      <img src={logo} width="13" height="13" alt="" />
-    </div>
+    <img class="logo" src={logo} width="22" height="22" alt="" />
     <span class="title">Death By Media</span>
   </div>
   <div class="controls">
@@ -39,13 +37,7 @@
     -webkit-app-region: drag; user-select: none;
   }
   .brand { display: flex; align-items: center; gap: 10px; }
-  .icon-tile {
-    width: 22px; height: 22px; border-radius: 6px;
-    background: linear-gradient(135deg, var(--accent), #7A5AF8);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
-  }
-  .icon-tile img { display: block; filter: brightness(10); }
+  .logo { display: block; border-radius: 6px; }
   .title { font-size: 12px; font-weight: 600; color: var(--text2); }
 
   .controls { display: flex; align-items: center; height: 100%; -webkit-app-region: no-drag; }

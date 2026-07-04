@@ -9,6 +9,12 @@ try {
   document.documentElement.dataset.theme = 'dark';
 }
 
+// When the window is drawn with the acrylic material, switch the backdrop
+// to a translucent tint so what's behind the window shows through
+if (window.api?.glass) {
+  document.documentElement.dataset.glass = 'true';
+}
+
 const app = new App({ target: document.getElementById('app') });
 
 export default app;
