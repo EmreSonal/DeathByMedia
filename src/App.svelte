@@ -8,9 +8,7 @@
   import YoutubeTab from './lib/components/YoutubeTab.svelte';
   import QueueTab from './lib/components/QueueTab.svelte';
   import Toasts from './lib/components/Toasts.svelte';
-  import { activeTab, addToast, theme } from './lib/stores/app.js';
-
-  $: if (typeof document !== 'undefined') document.documentElement.dataset.theme = $theme;
+  import { activeTab, addToast } from './lib/stores/app.js';
 
   onMount(() => {
     const preventWindowDrop = (e) => {
@@ -34,65 +32,30 @@
   });
 </script>
 
-<div class="blobs" aria-hidden="true">
-  <div class="blob b1"></div>
-  <div class="blob b2"></div>
-  <div class="blob b3"></div>
-</div>
+<Titlebar />
 
-<div class="shell">
-  <Titlebar />
-  <div class="app-layout">
-    <Sidebar />
-    <main class="content">
-      {#if $activeTab === 'image'}<ImageTab />
-      {:else if $activeTab === 'video'}<VideoTab />
-      {:else if $activeTab === 'audio'}<AudioTab />
-      {:else if $activeTab === 'youtube'}<YoutubeTab />
-      {:else if $activeTab === 'queue'}<QueueTab />
-      {/if}
-    </main>
-  </div>
+<div class="app-layout">
+  <Sidebar />
+  <main class="content">
+    {#if $activeTab === 'image'}<ImageTab />
+    {:else if $activeTab === 'video'}<VideoTab />
+    {:else if $activeTab === 'audio'}<AudioTab />
+    {:else if $activeTab === 'youtube'}<YoutubeTab />
+    {:else if $activeTab === 'queue'}<QueueTab />
+    {/if}
+  </main>
 </div>
 
 <Toasts />
 
 <style>
-  .blobs {
-    position: fixed; inset: 0;
-    overflow: hidden; pointer-events: none;
-  }
-  .blob { position: absolute; }
-  .b1 {
-    width: 560px; height: 560px; left: -140px; top: -180px;
-    background: radial-gradient(circle, var(--blob3), transparent 70%);
-    filter: blur(48px);
-  }
-  .b2 {
-    width: 640px; height: 640px; right: -180px; top: 160px;
-    background: radial-gradient(circle, var(--blob1), transparent 70%);
-    filter: blur(56px);
-  }
-  .b3 {
-    width: 480px; height: 480px; left: 340px; bottom: -220px;
-    background: radial-gradient(circle, var(--blob2), transparent 70%);
-    filter: blur(52px);
-  }
-
-  .shell {
-    position: relative;
-    height: 100vh;
-    display: flex; flex-direction: column;
-  }
   .app-layout {
     display: flex;
-    flex: 1;
-    min-height: 0;
+    height: calc(100vh - 36px);
   }
   .content {
     flex: 1;
-    min-width: 0;
     overflow-y: auto;
-    padding: 20px 36px 32px 12px;
+    padding: 28px 32px;
   }
 </style>
