@@ -49,118 +49,136 @@
 <h1>Video conversion</h1>
 <p class="subtitle">MP4, MKV, AVI, MOV, WEBM and FLV &mdash; with full codec control.</p>
 
-<div class="files">
-  <DropZone
-    bind:files
-    variant="chips"
-    addLabel="+ Add videos"
-    filters={[{ name: 'Videos', extensions: ['mp4','mkv','avi','mov','webm','flv','wmv','ts','m4v'] }]}
-  />
-</div>
+<DropZone
+  bind:files
+  variant="list"
+  label="Drop videos here"
+  hint="MP4 &middot; MKV &middot; AVI &middot; MOV &middot; WEBM &middot; FLV &middot; WMV &middot; TS"
+  addLabel="+ Add more"
+  filters={[{ name: 'Videos', extensions: ['mp4','mkv','avi','mov','webm','flv','wmv','ts','m4v'] }]}
+  icon={`<rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10,8 16,12 10,16"/>`}
+/>
 
-<div class="grid2">
-  <div class="glass-row">
-    <div class="row-label">Format</div>
-    <div class="select-wrap">
-      <select bind:value={format}>
-        <option value="mp4">MP4</option><option value="mkv">MKV</option>
-        <option value="avi">AVI</option><option value="mov">MOV</option>
-        <option value="webm">WEBM</option><option value="flv">FLV</option>
-      </select>
-      <svg class="chev" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/></svg>
+{#if files.length > 0}
+  <div class="panel">
+    <div class="grid">
+      <div class="field">
+        <label for="v-format">Output Format</label>
+        <select id="v-format" bind:value={format}>
+          <option value="mp4">MP4</option><option value="mkv">MKV</option>
+          <option value="avi">AVI</option><option value="mov">MOV</option>
+          <option value="webm">WEBM</option><option value="flv">FLV</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="v-codec">Video Codec</label>
+        <select id="v-codec" bind:value={codec}>
+          <option value="libx264">H.264 (x264)</option><option value="libx265">H.265 (x265)</option>
+          <option value="libvpx-vp9">VP9</option><option value="copy">Copy (no re-encode)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="v-acodec">Audio Codec</label>
+        <select id="v-acodec" bind:value={acodec}>
+          <option value="aac">AAC</option><option value="libmp3lame">MP3</option>
+          <option value="libopus">Opus</option><option value="copy">Copy</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="v-preset">Preset</label>
+        <select id="v-preset" bind:value={preset}>
+          <option value="ultrafast">Ultrafast</option><option value="fast">Fast</option>
+          <option value="medium">Medium</option><option value="slow">Slow</option>
+          <option value="veryslow">Very Slow</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="v-crf">CRF Quality <span class="val">{crf}</span></label>
+        <input id="v-crf" type="range" min="0" max="51" bind:value={crf}>
+      </div>
+      <div class="field">
+        <label for="v-resolution">Resolution</label>
+        <select id="v-resolution" bind:value={resolution}>
+          <option value="">Original</option><option value="3840:-1">4K</option>
+          <option value="1920:-1">1080p</option><option value="1280:-1">720p</option>
+          <option value="854:-1">480p</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="v-fps">FPS</label>
+        <select id="v-fps" bind:value={fps}>
+          <option value="">Original</option><option value="60">60</option>
+          <option value="30">30</option><option value="24">24</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="v-abitrate">Audio Bitrate</label>
+        <select id="v-abitrate" bind:value={abitrate}>
+          <option value="320k">320 kbps</option><option value="256k">256 kbps</option>
+          <option value="192k">192 kbps</option><option value="128k">128 kbps</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for="v-outdir">Output Folder</label>
+      <div class="folder-row">
+        <input id="v-outdir" type="text" value={outputDir} placeholder="Same as source" readonly>
+        <button class="btn-browse" on:click={pickDir}>Browse</button>
+      </div>
+    </div>
+    <div class="panel-actions">
+      <button class="btn-accent" on:click={convert}>
+        Convert {files.length} video{files.length === 1 ? '' : 's'}
+      </button>
+      <button class="btn-glass" on:click={addToQueue}>Add to queue</button>
     </div>
   </div>
-  <div class="glass-row">
-    <div class="row-label">Video codec</div>
-    <div class="select-wrap">
-      <select bind:value={codec}>
-        <option value="libx264">H.264</option><option value="libx265">H.265</option>
-        <option value="libvpx-vp9">VP9</option><option value="copy">Copy</option>
-      </select>
-      <svg class="chev" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/></svg>
-    </div>
-  </div>
-  <div class="glass-row">
-    <div class="row-label">Audio codec</div>
-    <div class="select-wrap">
-      <select bind:value={acodec}>
-        <option value="aac">AAC</option><option value="libmp3lame">MP3</option>
-        <option value="libopus">Opus</option><option value="copy">Copy</option>
-      </select>
-      <svg class="chev" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/></svg>
-    </div>
-  </div>
-  <div class="glass-row">
-    <div class="row-label">Preset</div>
-    <div class="select-wrap">
-      <select bind:value={preset}>
-        <option value="ultrafast">Ultrafast</option><option value="fast">Fast</option>
-        <option value="medium">Medium</option><option value="slow">Slow</option>
-        <option value="veryslow">Very slow</option>
-      </select>
-      <svg class="chev" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/></svg>
-    </div>
-  </div>
-  <div class="glass-row">
-    <div class="row-label">Resolution</div>
-    <div class="select-wrap">
-      <select bind:value={resolution}>
-        <option value="">Original</option><option value="3840:-1">4K</option>
-        <option value="1920:-1">1080p</option><option value="1280:-1">720p</option>
-        <option value="854:-1">480p</option>
-      </select>
-      <svg class="chev" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/></svg>
-    </div>
-  </div>
-  <div class="glass-row">
-    <div class="row-label">Frame rate</div>
-    <div class="select-wrap">
-      <select bind:value={fps}>
-        <option value="">Original</option><option value="60">60</option>
-        <option value="30">30</option><option value="24">24</option>
-      </select>
-      <svg class="chev" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/></svg>
-    </div>
-  </div>
-  <div class="glass-row">
-    <div class="row-label">Audio bitrate</div>
-    <div class="select-wrap">
-      <select bind:value={abitrate}>
-        <option value="320k">320 kbps</option><option value="256k">256 kbps</option>
-        <option value="192k">192 kbps</option><option value="128k">128 kbps</option>
-      </select>
-      <svg class="chev" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/></svg>
-    </div>
-  </div>
-  <div class="glass-row full">
-    <div>
-      <div class="row-label">Output folder</div>
-      <div class="row-hint">Where converted files are saved</div>
-    </div>
-    <div class="folder-group">
-      <input type="text" value={outputDir} placeholder="Same as source" readonly>
-      <button class="btn-browse" on:click={pickDir}>Browse</button>
-    </div>
-  </div>
-  <div class="glass-row full">
-    <div>
-      <div class="row-label">CRF quality</div>
-      <div class="row-hint">Lower is higher quality</div>
-    </div>
-    <div class="slider-group">
-      <input type="range" min="0" max="51" bind:value={crf}>
-      <span class="slider-val">{crf}</span>
-    </div>
-  </div>
-</div>
-
-<div class="actions">
-  <button class="btn-accent" on:click={convert}>
-    {files.length ? `Convert ${files.length} video${files.length === 1 ? '' : 's'}` : 'Convert videos'}
-  </button>
-  <button class="btn-glass" on:click={addToQueue}>Add to queue</button>
-</div>
+{/if}
 
 <style>
-  .files { margin-bottom: 16px; }
+  .panel {
+    margin-top: 20px; padding: 20px;
+    background: var(--layer);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--stroke-hi);
+    border-radius: 12px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .field label {
+    display: block;
+    font-size: 11px; font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase; letter-spacing: 0.6px;
+    margin-bottom: 6px;
+  }
+  .val { color: var(--text); font-weight: 700; font-size: 12px; margin-left: 4px; letter-spacing: 0; }
+
+  .field select {
+    width: 100%; height: 36px; padding: 0 30px 0 12px;
+    background: var(--input);
+    border: 1px solid var(--stroke);
+    border-bottom-color: var(--input-b);
+    border-radius: 5px;
+    color: var(--text);
+    font-size: 13px; font-family: var(--font);
+    outline: none; cursor: pointer;
+    -webkit-appearance: none; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23888' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  .field input[type="range"] { width: 100%; margin-top: 12px; }
+
+  .folder-row { display: flex; gap: 8px; }
+  .folder-row input { flex: 1; height: 36px; }
+  .folder-row .btn-browse { height: 36px; }
+
+  .panel-actions {
+    display: flex; gap: 10px;
+    margin-top: 18px; padding-top: 16px;
+    border-top: 1px solid var(--stroke);
+  }
 </style>

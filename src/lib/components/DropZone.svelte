@@ -5,7 +5,7 @@
   export let hint = '';
   export let filters = [];
   export let icon = `<rect x="3" y="3" width="18" height="18" rx="2"/>`;
-  export let variant = 'zone'; // 'zone' | 'chips'
+  export let variant = 'zone'; // 'zone' | 'chips' | 'list'
   export let addLabel = '+ Add files';
 
   let dragging = false;
@@ -95,7 +95,17 @@
   on:dragleave={onDragLeave}
   on:drop={onDrop}
 >
-  {#if variant === 'zone'}
+  {#if variant === 'list' && files.length > 0}
+    <div class="file-list">
+      {#each files as file, idx}
+        <div class="file-item">
+          <span class="fname" title={file.path}>{file.name}</span>
+          <button class="remove" on:click={() => removeFile(idx)}>&times;</button>
+        </div>
+      {/each}
+    </div>
+    <button class="add-more" on:click={browse}>{addLabel}</button>
+  {:else if variant === 'zone' || variant === 'list'}
     <div
       class="dropzone"
       on:click={browse}
@@ -107,7 +117,7 @@
       <p>{label}, or <span class="browse">browse files</span></p>
       {#if hint}<span class="hint">{hint}</span>{/if}
     </div>
-    {#if files.length > 0}
+    {#if variant === 'zone' && files.length > 0}
       <div class="chips-row chips-below">
         {#each files as file, idx}
           <span class="chip">
@@ -154,4 +164,38 @@
     outline-offset: 6px;
     border-radius: 8px;
   }
+
+  .file-list { display: flex; flex-direction: column; gap: 6px; }
+  .drop-shell.dragging .file-list {
+    outline: 1.5px dashed var(--input-b);
+    outline-offset: 6px;
+    border-radius: 8px;
+  }
+  .file-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 8px 10px 16px;
+    background: var(--layer);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border: 1px solid var(--stroke-hi);
+    border-radius: 8px;
+  }
+  .fname { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-item .remove {
+    width: 24px; height: 24px; flex-shrink: 0;
+    border: none; border-radius: 99px;
+    background: transparent; color: var(--text3);
+    cursor: pointer; font-size: 15px; font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .file-item .remove:hover { background: var(--hover); color: var(--text); }
+  .add-more {
+    margin-top: 10px;
+    border: none; background: transparent;
+    color: var(--text2); font-size: 12.5px; font-family: inherit;
+    cursor: pointer; padding: 4px 6px; border-radius: 5px;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .add-more:hover { background: var(--hover); color: var(--text); }
 </style>

@@ -62,6 +62,9 @@
     position: fixed; inset: 0;
     overflow: hidden; pointer-events: none;
   }
+  /* With real acrylic translucency the painted refraction blobs would tint
+     the genuine backdrop — only keep them for the solid fallback. */
+  :global([data-glass]) .blobs { display: none; }
   .blob { position: absolute; }
   .b1 {
     width: 560px; height: 560px; left: -140px; top: -180px;
