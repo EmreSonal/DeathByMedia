@@ -2,7 +2,7 @@
 
 A desktop app for media conversion and YouTube downloading. Built with Svelte + Electron.
 
-> **✨ New in v1.1.0 — Liquid Glass UI.** The interface has been completely redesigned: a Windows 11 Fluent look with Apple Liquid Glass materials — Mica window background, tinted refraction blobs, translucent blurred glass cards, a Fluent navigation pane, and full **dark/light theming** with a Win11 accent (toggle in the titlebar, choice is remembered).
+> **New in v1.1.0 — New UI.** The interface has been completely redesigned: a Windows 11 look and full **dark/light theming** with a Win11 accent (toggle in the titlebar, choice is remembered).
 
 ## Features
 
