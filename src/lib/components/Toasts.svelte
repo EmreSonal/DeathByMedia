@@ -4,7 +4,7 @@
 
 <div class="toast-container">
   {#each $toasts as toast (toast.id)}
-    <div class="toast {toast.type}">
+    <div class="toast" class:error={toast.type === 'error'}>
       {toast.msg}
     </div>
   {/each}
@@ -12,17 +12,24 @@
 
 <style>
   .toast-container {
-    position: fixed; bottom: 20px; right: 20px;
-    display: flex; flex-direction: column-reverse; gap: 6px;
+    position: fixed; bottom: 24px; right: 24px;
+    display: flex; flex-direction: column-reverse; gap: 8px;
     z-index: 999; pointer-events: none;
   }
   .toast {
-    padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
-    pointer-events: auto; animation: slideIn 200ms ease; max-width: 340px;
+    padding: 11px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; max-width: 340px;
+    background: var(--toast-bg);
+    backdrop-filter: blur(30px) saturate(170%);
+    -webkit-backdrop-filter: blur(30px) saturate(170%);
+    border: 1px solid var(--stroke-hi);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+    color: var(--text);
+    pointer-events: auto;
+    animation: slideIn 200ms ease;
   }
-  .toast.success { background: rgba(255,255,255,0.08); color: #ccc; border: 1px solid #222; }
-  .toast.error { background: rgba(204,68,68,0.12); color: #cc4444; border: 1px solid rgba(204,68,68,0.2); }
-  .toast.info { background: rgba(255,255,255,0.06); color: #999; border: 1px solid #1e1e1e; }
+  .toast.error { color: #ff8a80; }
+  :global([data-theme="light"]) .toast.error { color: #c42b1c; }
 
   @keyframes slideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 </style>

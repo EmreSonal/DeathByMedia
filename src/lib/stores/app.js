@@ -4,13 +4,25 @@ export const activeTab = writable('image');
 export const queue = writable([]);
 export const toasts = writable([]);
 
+const savedTheme = (() => {
+  try { return localStorage.getItem('dbm-lg-theme'); } catch { return null; }
+})();
+export const theme = writable(savedTheme === 'light' || savedTheme === 'dark' ? savedTheme : 'dark');
+theme.subscribe(t => {
+  try { localStorage.setItem('dbm-lg-theme', t); } catch {}
+});
+
+export function toggleTheme() {
+  theme.update(t => (t === 'dark' ? 'light' : 'dark'));
+}
+
 export const queuePending = derived(queue, $q => $q.filter(j => j.status === 'pending' || j.status === 'running').length);
 
 let toastId = 0;
 export function addToast(msg, type = 'info') {
   const id = ++toastId;
   toasts.update(t => [...t, { id, msg, type }]);
-  setTimeout(() => toasts.update(t => t.filter(x => x.id !== id)), 3500);
+  setTimeout(() => toasts.update(t => t.filter(x => x.id !== id)), 2600);
 }
 
 export function uid() {
