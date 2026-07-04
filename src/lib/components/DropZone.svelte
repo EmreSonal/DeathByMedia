@@ -5,6 +5,8 @@
   export let hint = '';
   export let filters = [];
   export let icon = `<rect x="3" y="3" width="18" height="18" rx="2"/>`;
+  export let variant = 'zone'; // 'zone' | 'chips'
+  export let addLabel = '+ Add files';
 
   let dragging = false;
   let dragDepth = 0;
@@ -82,7 +84,6 @@
     dragging = false;
     addFiles(getDroppedPaths(e.dataTransfer));
   }
-
 </script>
 
 <div
@@ -94,7 +95,7 @@
   on:dragleave={onDragLeave}
   on:drop={onDrop}
 >
-  {#if files.length === 0}
+  {#if variant === 'zone'}
     <div
       class="dropzone"
       on:click={browse}
@@ -102,19 +103,29 @@
       tabindex="0"
       on:keydown={(e) => e.key === 'Enter' && browse()}
     >
-      <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.2">{@html icon}</svg>
-      <p>{label} or <button class="link" on:click|stopPropagation={browse}>browse</button></p>
+      <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.3">{@html icon}</svg>
+      <p>{label}, or <span class="browse">browse files</span></p>
       {#if hint}<span class="hint">{hint}</span>{/if}
     </div>
+    {#if files.length > 0}
+      <div class="chips-row chips-below">
+        {#each files as file, idx}
+          <span class="chip">
+            <span class="chip-name" title={file.path}>{file.name}</span>
+            <button class="chip-x" on:click={() => removeFile(idx)}>&times;</button>
+          </span>
+        {/each}
+      </div>
+    {/if}
   {:else}
-    <div class="file-list">
+    <div class="chips-row">
       {#each files as file, idx}
-        <div class="file-item">
-          <span class="fname" title={file.path}>{file.name}</span>
-          <button class="remove" on:click={() => removeFile(idx)}>&times;</button>
-        </div>
+        <span class="chip">
+          <span class="chip-name" title={file.path}>{file.name}</span>
+          <button class="chip-x" on:click={() => removeFile(idx)}>&times;</button>
+        </span>
       {/each}
-      <button class="btn btn-ghost btn-sm add-more" on:click={browse}>+ Add more</button>
+      <button class="add-pill" on:click={browse}>{addLabel}</button>
     </div>
   {/if}
 </div>
@@ -122,35 +133,25 @@
 <style>
   .drop-shell { position: relative; }
   .dropzone {
-    border: 1.5px dashed #1e1e1e; border-radius: 12px;
-    padding: 44px 20px; text-align: center; cursor: pointer;
-    transition: all 120ms ease;
-    display: flex; flex-direction: column; align-items: center; gap: 10px;
-  }
-  .dropzone:hover, .drop-shell.dragging .dropzone { border-color: #444; background: rgba(255,255,255,0.02); }
-  .dropzone p { color: #666; font-size: 14px; }
-  .hint { color: #444; font-size: 11px; }
-  .link { background: none; border: none; color: #aaa; cursor: pointer; font-size: inherit; text-decoration: underline; text-underline-offset: 2px; font-family: inherit; }
-  .link:hover { color: #fff; }
-
-  .file-list { display: flex; flex-direction: column; gap: 4px; }
-  .drop-shell.dragging .file-list {
-    background: rgba(255,255,255,0.02);
-    border: 1.5px dashed #444;
+    border: 1.5px dashed var(--input-b);
+    background: var(--layer);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
     border-radius: 12px;
-    padding: 10px;
+    padding: 34px 20px;
+    text-align: center; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: background 120ms ease;
   }
-  .file-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 9px 14px; background: #0a0a0a; border-radius: 8px;
-    border: 1px solid #1a1a1a;
+  .dropzone:hover, .drop-shell.dragging .dropzone { background: var(--layer-hi); }
+  .dropzone p { margin: 0; font-size: 14px; color: var(--text2); }
+  .browse { color: var(--accent); font-weight: 600; }
+  .hint { font-size: 11.5px; color: var(--text3); }
+
+  .chips-below { margin-top: 12px; }
+  .drop-shell.dragging .chips-row:not(.chips-below) {
+    outline: 1.5px dashed var(--input-b);
+    outline-offset: 6px;
+    border-radius: 8px;
   }
-  .fname { flex: 1; font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .remove {
-    width: 24px; height: 24px; border: none; background: transparent;
-    color: #555; cursor: pointer; border-radius: 4px; font-size: 16px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .remove:hover { background: rgba(204,68,68,0.12); color: #cc4444; }
-  .add-more { align-self: flex-start; margin-top: 4px; }
 </style>
