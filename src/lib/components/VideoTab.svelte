@@ -1,6 +1,6 @@
 <script>
   import DropZone from './DropZone.svelte';
-  import { addToast, enqueueJobs, uid, dirname, stripExt } from '../stores/app.js';
+  import { addToast, enqueueJobs, hwEncoders, uid, dirname, stripExt } from '../stores/app.js';
 
   let files = [];
   let format = 'mp4';
@@ -15,6 +15,26 @@
 
   const codecLabels = { libx264: 'H.264', libx265: 'H.265', 'libvpx-vp9': 'VP9', copy: 'Copy' };
 
+  // Hardware acceleration: '' = software; otherwise a vendor whose
+  // encoder for the selected codec family passed the startup probe.
+  let accel = '';
+  let accelDefaulted = false;
+  const accelLabels = { nvenc: 'NVIDIA (NVENC)', qsv: 'Intel (QuickSync)', amf: 'AMD (AMF)' };
+  const familyMap = { libx264: 'h264', libx265: 'hevc' };
+
+  $: family = familyMap[codec] || null;
+  $: availableAccels = family && $hwEncoders
+    ? ['nvenc', 'qsv', 'amf'].filter(a => $hwEncoders[`${family}_${a}`])
+    : [];
+  // Default to the best available hardware encoder once detection lands
+  $: if (!accelDefaulted && $hwEncoders && family) {
+    accelDefaulted = true;
+    accel = availableAccels[0] || '';
+  }
+  // Fall back to software when the codec changes to one the current
+  // vendor can't encode (or to VP9/Copy, which are software-only)
+  $: if (accel && !availableAccels.includes(accel)) accel = '';
+
   async function pickDir() {
     const dir = await window.api?.openFolder();
     if (dir) outputDir = dir;
@@ -23,12 +43,13 @@
   function buildJob(file) {
     const outDir = outputDir || dirname(file.path);
     const outName = stripExt(file.name) + '_converted.' + format;
+    const encoder = accel && family ? `${family}_${accel}` : codec;
     return {
       id: uid(), type: 'video', input: file.path, output: outDir + '/' + outName,
-      format, codec, audioCodec: acodec, preset, crf,
+      format, codec: encoder, hw: accel || null, audioCodec: acodec, preset, crf,
       resolution: resolution || null, fps: fps || null, audioBitrate: abitrate,
       displayName: file.name, outputName: outName,
-      detail: `Video → ${format.toUpperCase()} · ${codecLabels[codec] || codec} · CRF ${crf}`,
+      detail: `Video → ${format.toUpperCase()} · ${codecLabels[codec] || codec}${accel ? ` (${accel.toUpperCase()})` : ''} · CRF ${crf}`,
     };
   }
 
@@ -77,6 +98,15 @@
         </select>
       </div>
       <div class="field">
+        <label for="v-accel">Encoder</label>
+        <select id="v-accel" bind:value={accel} disabled={!family || !availableAccels.length}>
+          <option value="">Software (CPU)</option>
+          {#each availableAccels as a}
+            <option value={a}>{accelLabels[a]}</option>
+          {/each}
+        </select>
+      </div>
+      <div class="field">
         <label for="v-acodec">Audio Codec</label>
         <select id="v-acodec" bind:value={acodec}>
           <option value="aac">AAC</option><option value="libmp3lame">MP3</option>
@@ -98,9 +128,9 @@
       <div class="field">
         <label for="v-resolution">Resolution</label>
         <select id="v-resolution" bind:value={resolution}>
-          <option value="">Original</option><option value="3840:-1">4K</option>
-          <option value="1920:-1">1080p</option><option value="1280:-1">720p</option>
-          <option value="854:-1">480p</option>
+          <option value="">Original</option><option value="3840:-2">4K</option>
+          <option value="1920:-2">1080p</option><option value="1280:-2">720p</option>
+          <option value="854:-2">480p</option>
         </select>
       </div>
       <div class="field">

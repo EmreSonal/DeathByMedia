@@ -120,6 +120,31 @@ ipcMain.handle('dialog:openFolder', async () => {
 
 ipcMain.handle('shell:openPath', async (_, dirPath) => { shell.openPath(dirPath); });
 
+// ─── Hardware encoder detection ──────────────────────────────────────
+// The bundled ffmpeg compiles in NVENC/QSV/AMF, but they only initialize
+// on matching hardware — so each is probed with a tiny test encode.
+const HW_ENCODERS = ['h264_nvenc', 'hevc_nvenc', 'h264_qsv', 'hevc_qsv', 'h264_amf', 'hevc_amf'];
+let hwDetectPromise = null;
+
+function probeEncoder(name) {
+  return new Promise((resolve) => {
+    execFile(
+      getFfmpegPath(),
+      ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=black:s=256x256:d=0.1', '-frames:v', '3', '-c:v', name, '-f', 'null', '-'],
+      { timeout: 15000, windowsHide: true },
+      (err) => resolve(!err)
+    );
+  });
+}
+
+ipcMain.handle('hw:detect', () => {
+  if (!hwDetectPromise) {
+    hwDetectPromise = Promise.all(HW_ENCODERS.map(probeEncoder))
+      .then(results => Object.fromEntries(HW_ENCODERS.map((n, i) => [n, results[i]])));
+  }
+  return hwDetectPromise;
+});
+
 // ─── Probe ───────────────────────────────────────────────────────────
 ipcMain.handle('ffprobe:info', (_, filePath) => {
   return new Promise((resolve, reject) => {
@@ -192,8 +217,7 @@ function buildFfmpegArgs(job) {
       if (job.audioBitrate) args.push('-b:a', job.audioBitrate);
       if (job.resolution) args.push('-vf', `scale=${job.resolution}`);
       if (job.fps) args.push('-r', String(job.fps));
-      if (job.preset) args.push('-preset', job.preset);
-      if (job.crf !== undefined && job.crf !== null) args.push('-crf', String(job.crf));
+      pushVideoQualityArgs(args, job);
       break;
     case 'audio':
       args.push('-vn');
@@ -204,6 +228,38 @@ function buildFfmpegArgs(job) {
   }
   args.push(job.output);
   return args;
+}
+
+// Each hardware encoder speaks its own preset/quality dialect; translate
+// the UI's x264-style preset + CRF for whichever encoder runs the job.
+function pushVideoQualityArgs(args, job) {
+  const preset = job.preset;
+  const crf = (job.crf !== undefined && job.crf !== null) ? String(job.crf) : null;
+
+  switch (job.hw) {
+    case 'nvenc': {
+      const map = { ultrafast: 'p1', fast: 'p3', medium: 'p4', slow: 'p6', veryslow: 'p7' };
+      if (preset) args.push('-preset', map[preset] || 'p4');
+      if (crf) args.push('-rc', 'vbr', '-cq', crf, '-b:v', '0');
+      break;
+    }
+    case 'qsv': {
+      const map = { ultrafast: 'veryfast', fast: 'fast', medium: 'medium', slow: 'slow', veryslow: 'veryslow' };
+      if (preset) args.push('-preset', map[preset] || 'medium');
+      if (crf) args.push('-global_quality', crf);
+      break;
+    }
+    case 'amf': {
+      const map = { ultrafast: 'speed', fast: 'speed', medium: 'balanced', slow: 'quality', veryslow: 'quality' };
+      if (preset) args.push('-quality', map[preset] || 'balanced');
+      if (crf) args.push('-rc', 'cqp', '-qp_i', crf, '-qp_p', crf);
+      break;
+    }
+    default: {
+      if (preset) args.push('-preset', preset);
+      if (crf) args.push('-crf', crf);
+    }
+  }
 }
 
 // ─── YouTube ─────────────────────────────────────────────────────────

@@ -8,6 +8,7 @@ const glass = process.platform === 'win32' &&
 contextBridge.exposeInMainWorld('api', {
   glass,
   setTheme: (theme) => ipcRenderer.send('theme:set', theme),
+  detectEncoders: () => ipcRenderer.invoke('hw:detect'),
   minimize: () => ipcRenderer.send('window:minimize'),
   maximize: () => ipcRenderer.send('window:maximize'),
   close: () => ipcRenderer.send('window:close'),

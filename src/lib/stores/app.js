@@ -48,6 +48,10 @@ export const audioCodecMap = {
   mp3: 'libmp3lame', flac: 'flac', wav: 'pcm_s16le', aac: 'aac', ogg: 'libvorbis', m4a: 'aac',
 };
 
+// Hardware encoders usable on this machine (e.g. { h264_nvenc: true, ... }).
+// Probed once by the main process; null until detection completes.
+export const hwEncoders = writable(null);
+
 // ─── Conversion queue ────────────────────────────────────────────────
 // Jobs always live in the queue store so every conversion is visible as
 // a task with progress, whether started directly or via "Add to queue".
@@ -152,6 +156,8 @@ export function cancelYtDownload() {
 // ─── Global IPC listeners (registered exactly once) ──────────────────
 
 if (typeof window !== 'undefined' && window.api) {
+  window.api.detectEncoders?.().then(m => hwEncoders.set(m || {})).catch(() => hwEncoders.set({}));
+
   window.api.onConvertProgress?.((d) => {
     queue.update(q => q.map(j => j.id === d.id ? { ...j, progress: d.progress, status: 'running' } : j));
   });
