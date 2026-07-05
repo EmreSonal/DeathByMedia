@@ -15,8 +15,9 @@ bin/ffprobe*
 .idea/
 .claude/
 
-# Design references and archives
+# Design references, archives, local test media
 new_design/
+test_media/
 *.zip
 
 # Logs and OS junk

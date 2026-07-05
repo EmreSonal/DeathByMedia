@@ -8,7 +8,7 @@
   import YoutubeTab from './lib/components/YoutubeTab.svelte';
   import QueueTab from './lib/components/QueueTab.svelte';
   import Toasts from './lib/components/Toasts.svelte';
-  import { activeTab, addToast, theme } from './lib/stores/app.js';
+  import { activeTab, theme } from './lib/stores/app.js';
 
   $: if (typeof document !== 'undefined') document.documentElement.dataset.theme = $theme;
 
@@ -18,16 +18,10 @@
       e.preventDefault();
     };
 
-    const offConvertDone = window.api?.onConvertDone((job) => {
-      const label = job.displayName || job.outputName || 'Task';
-      addToast(`${label} complete!`, 'success');
-    });
-
     window.addEventListener('dragover', preventWindowDrop);
     window.addEventListener('drop', preventWindowDrop);
 
     return () => {
-      offConvertDone?.();
       window.removeEventListener('dragover', preventWindowDrop);
       window.removeEventListener('drop', preventWindowDrop);
     };

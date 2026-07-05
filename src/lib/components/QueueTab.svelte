@@ -1,66 +1,13 @@
 <script>
-  import { onMount } from 'svelte';
-  import { queue, addToast } from '../stores/app.js';
-
-  let running = false;
+  import { queue, addToast, startQueue, removeJob, clearQueue } from '../stores/app.js';
 
   const statusLabels = { pending: 'Pending', running: 'Running', done: 'Completed', error: 'Error' };
   const typeLabels = { image: 'IMG', video: 'VID', audio: 'AUD' };
 
-  function removeItem(idx) {
-    queue.update(q => {
-      const job = q[idx];
-      if (job.status === 'running') window.api?.cancelConvert(job.id);
-      return q.filter((_, i) => i !== idx);
-    });
-  }
-
   function clearAll() {
-    queue.update(q => {
-      q.forEach(j => { if (j.status === 'running') window.api?.cancelConvert(j.id); });
-      return [];
-    });
-    running = false;
+    clearQueue();
     addToast('Queue cleared', 'info');
   }
-
-  function startAll() {
-    const pending = $queue.filter(j => j.status === 'pending');
-    if (!pending.length) return addToast('No pending jobs', 'error');
-    running = true;
-    processNext();
-  }
-
-  function processNext() {
-    if (!running) return;
-    const next = $queue.find(j => j.status === 'pending');
-    if (!next) { running = false; addToast('Queue complete!', 'success'); return; }
-    next.status = 'running';
-    queue.set($queue);
-    window.api?.startConvert(next);
-  }
-
-  onMount(() => {
-    const offProgress = window.api?.onConvertProgress((d) => {
-      queue.update(q => q.map(j => j.id === d.id ? { ...j, progress: d.progress, status: 'running' } : j));
-    });
-    const offDone = window.api?.onConvertDone((d) => {
-      queue.update(q => q.map(j => j.id === d.id ? { ...j, progress: 100, status: 'done' } : j));
-      addToast(`${d.displayName || d.outputName || 'Job'} done`, 'success');
-      processNext();
-    });
-    const offError = window.api?.onConvertError((d) => {
-      queue.update(q => q.map(j => j.id === d.id ? { ...j, status: 'error' } : j));
-      addToast(`Error: ${d.error}`, 'error');
-      processNext();
-    });
-
-    return () => {
-      offProgress?.();
-      offDone?.();
-      offError?.();
-    };
-  });
 </script>
 
 <h1>Batch queue</h1>
@@ -79,7 +26,7 @@
   </div>
 {:else}
   <div class="list">
-    {#each $queue as job, idx (job.id)}
+    {#each $queue as job (job.id)}
       <div class="job">
         <div class="tile">{typeLabels[job.type] || '?'}</div>
         <div class="info">
@@ -92,12 +39,12 @@
           </div>
         </div>
         <span class="pill {job.status}">{statusLabels[job.status] || job.status}</span>
-        <button class="remove" on:click={() => removeItem(idx)}>&times;</button>
+        <button class="remove" on:click={() => removeJob(job.id)}>&times;</button>
       </div>
     {/each}
   </div>
   <div class="actions">
-    <button class="btn-accent" on:click={startAll}>Start all</button>
+    <button class="btn-accent" on:click={() => startQueue()}>Start all</button>
     <button class="btn-danger" on:click={clearAll}>Clear queue</button>
   </div>
 {/if}

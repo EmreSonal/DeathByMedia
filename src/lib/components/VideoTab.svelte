@@ -1,6 +1,6 @@
 <script>
   import DropZone from './DropZone.svelte';
-  import { queue, addToast, uid, dirname, stripExt } from '../stores/app.js';
+  import { addToast, enqueueJobs, uid, dirname, stripExt } from '../stores/app.js';
 
   let files = [];
   let format = 'mp4';
@@ -34,15 +34,14 @@
 
   function convert() {
     if (!files.length) return addToast('No files selected', 'error');
-    files.forEach(f => window.api?.startConvert(buildJob(f)));
+    enqueueJobs(files.map(buildJob), { start: true });
     addToast(`Converting ${files.length} video(s)…`, 'info');
   }
 
   function addToQueue() {
     if (!files.length) return addToast('No files selected', 'error');
-    const jobs = files.map(f => ({ ...buildJob(f), status: 'pending', progress: 0 }));
-    queue.update(q => [...q, ...jobs]);
-    addToast(`Added ${jobs.length} job(s) to queue`, 'info');
+    enqueueJobs(files.map(buildJob));
+    addToast(`Added ${files.length} job(s) to queue`, 'info');
   }
 </script>
 
@@ -61,7 +60,7 @@
 
 {#if files.length > 0}
   <div class="panel">
-    <div class="grid">
+    <div class="panel-grid-2">
       <div class="field">
         <label for="v-format">Output Format</label>
         <select id="v-format" bind:value={format}>
@@ -134,51 +133,3 @@
     </div>
   </div>
 {/if}
-
-<style>
-  .panel {
-    margin-top: 20px; padding: 20px;
-    background: var(--layer);
-    backdrop-filter: blur(24px) saturate(160%);
-    -webkit-backdrop-filter: blur(24px) saturate(160%);
-    border: 1px solid var(--stroke-hi);
-    border-radius: 12px;
-  }
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-
-  .field label {
-    display: block;
-    font-size: 11px; font-weight: 600;
-    color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.6px;
-    margin-bottom: 6px;
-  }
-  .val { color: var(--text); font-weight: 700; font-size: 12px; margin-left: 4px; letter-spacing: 0; }
-
-  .field select {
-    width: 100%; height: 36px; padding: 0 30px 0 12px;
-    background: var(--input);
-    border: 1px solid var(--stroke);
-    border-bottom-color: var(--input-b);
-    border-radius: 5px;
-    color: var(--text);
-    font-size: 13px; font-family: var(--font);
-    outline: none; cursor: pointer;
-    -webkit-appearance: none; appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23888' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-  }
-
-  .field input[type="range"] { width: 100%; margin-top: 12px; }
-
-  .folder-row { display: flex; gap: 8px; }
-  .folder-row input { flex: 1; height: 36px; }
-  .folder-row .btn-browse { height: 36px; }
-
-  .panel-actions {
-    display: flex; gap: 10px;
-    margin-top: 18px; padding-top: 16px;
-    border-top: 1px solid var(--stroke);
-  }
-</style>
