@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn, execFile } = require('child_process');
@@ -51,6 +51,9 @@ function getYtdlpPath() {
 
 // ─── Window ──────────────────────────────────────────────────────────
 let mainWindow;
+let usesAcrylic = false;
+// Window bounds before a fake-maximize, so the button can restore them.
+let preMaximizeBounds = null;
 
 // Acrylic (backgroundMaterial) needs Windows 11 22H2+ (build 22621).
 // It also requires titleBarStyle:'hidden' — with frame:false the material
@@ -61,8 +64,25 @@ function supportsAcrylic() {
   return Number.isFinite(build) && build >= 22621;
 }
 
+// A real maximize permanently kills the acrylic material for the lifetime
+// of the window on affected Electron versions (electron/electron#41824,
+// #46753) — nothing re-applies it afterwards, not even DWM calls. So while
+// acrylic is on, the window is created with maximizable:false (which also
+// blocks titlebar double-click, drag-to-top and Win+Up) and "maximize"
+// means resizing to the display's work area instead.
+function workAreaFor(bounds) {
+  return screen.getDisplayMatching(bounds).workArea;
+}
+
+function isFakeMaximized() {
+  const b = mainWindow.getBounds();
+  const wa = workAreaFor(b);
+  return Math.abs(b.x - wa.x) <= 1 && Math.abs(b.y - wa.y) <= 1 &&
+         Math.abs(b.width - wa.width) <= 1 && Math.abs(b.height - wa.height) <= 1;
+}
+
 function createWindow() {
-  const acrylic = supportsAcrylic();
+  usesAcrylic = supportsAcrylic();
 
   mainWindow = new BrowserWindow({
     width: 1100,
@@ -70,7 +90,8 @@ function createWindow() {
     minWidth: 900,
     minHeight: 650,
     titleBarStyle: 'hidden',
-    ...(acrylic
+    maximizable: !usesAcrylic,
+    ...(usesAcrylic
       ? { backgroundMaterial: 'acrylic' }
       : { backgroundColor: nativeTheme.shouldUseDarkColors ? '#222226' : '#eff1f6' }),
     webPreferences: {
@@ -94,8 +115,19 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 // ─── Window Controls ─────────────────────────────────────────────────
 ipcMain.on('window:minimize', () => mainWindow?.minimize());
 ipcMain.on('window:maximize', () => {
-  if (mainWindow?.isMaximized()) mainWindow.unmaximize();
-  else mainWindow?.maximize();
+  if (!mainWindow) return;
+  if (!usesAcrylic) {
+    if (mainWindow.isMaximized()) mainWindow.unmaximize();
+    else mainWindow.maximize();
+    return;
+  }
+  if (isFakeMaximized() && preMaximizeBounds) {
+    mainWindow.setBounds(preMaximizeBounds);
+    preMaximizeBounds = null;
+  } else {
+    preMaximizeBounds = mainWindow.getBounds();
+    mainWindow.setBounds(workAreaFor(preMaximizeBounds));
+  }
 });
 ipcMain.on('window:close', () => mainWindow?.close());
 
